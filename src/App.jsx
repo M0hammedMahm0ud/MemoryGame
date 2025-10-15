@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import Form from "./components/Form";
 import MemoryCard from "./components/MemoryCard";
 
@@ -7,15 +7,25 @@ export default function App() {
   const [emojisData, setEmojisData] = useState([]);
   const [selectedCards, setSelectedCards] = useState([]);
   const [matchedCards, setMatchedCards] = useState([]);
+  const [isGameOver, setIsGameOver] = useState(false);
 
   useEffect(() => {
     if (
       selectedCards.length === 2 &&
       selectedCards[0].name === selectedCards[1].name
     ) {
-      setMatchedCards((prev) => [...prev, ...selectedCards]);
+      setMatchedCards((prevMatchedCards) => [
+        ...prevMatchedCards,
+        ...selectedCards,
+      ]);
     }
   }, [selectedCards]);
+
+  useEffect(() => {
+    if (emojisData.length && matchedCards.length === emojisData.length) {
+      setIsGameOver(true);
+    }
+  }, [matchedCards]);
 
   async function startGame(e) {
     e.preventDefault();
@@ -30,10 +40,8 @@ export default function App() {
       }
 
       const data = await response.json();
-      console.log(data);
-      const dataSlice = getDataSlice(data);
-
-      const emojisArray = getEmojisArray(dataSlice);
+      const dataSlice = await getDataSlice(data);
+      const emojisArray = await getEmojisArray(dataSlice);
 
       setEmojisData(emojisArray);
       setIsGameOn(true);
@@ -42,19 +50,17 @@ export default function App() {
     }
   }
 
-  function getDataSlice(data) {
+  async function getDataSlice(data) {
     const randomIndices = getRandomIndices(data);
-    // ex: randomIndices = 10 22 30 50 80
-    console.log(randomIndices);
-    // return array of data emoji objects
+
     const dataSlice = randomIndices.reduce((array, index) => {
       array.push(data[index]);
       return array;
     }, []);
-    console.log(dataSlice);
+
     return dataSlice;
   }
-  // get randome emoji indices from api data(107 emoji) => (5 emoji)
+
   function getRandomIndices(data) {
     const randomIndicesArray = [];
 
@@ -70,8 +76,7 @@ export default function App() {
     return randomIndicesArray;
   }
 
-  // return final shuffiled and dublicated array of emojis
-  function getEmojisArray(data) {
+  async function getEmojisArray(data) {
     const pairedEmojisArray = [...data, ...data];
 
     for (let i = pairedEmojisArray.length - 1; i > 0; i--) {
@@ -84,7 +89,7 @@ export default function App() {
     return pairedEmojisArray;
   }
 
-  function turnCard(index, name) {
+  function turnCard(name, index) {
     const selectedCardEntry = selectedCards.find(
       (emoji) => emoji.index === index
     );
@@ -97,14 +102,20 @@ export default function App() {
     } else if (!selectedCardEntry && selectedCards.length === 2) {
       setSelectedCards([{ name, index }]);
     }
-    console.log(selectedCards);
   }
 
   return (
     <main>
       <h1>Memory</h1>
       {!isGameOn && <Form handleSubmit={startGame} />}
-      {isGameOn && <MemoryCard handleClick={turnCard} data={emojisData} />}
+      {isGameOn && (
+        <MemoryCard
+          handleClick={turnCard}
+          data={emojisData}
+          selectedCards={selectedCards}
+          matchedCards={matchedCards}
+        />
+      )}
     </main>
   );
 }
