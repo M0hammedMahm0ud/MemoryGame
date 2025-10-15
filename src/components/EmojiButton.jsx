@@ -10,7 +10,11 @@ export default function EmojiButton({
   else if (matchedCardEntry) btnStyle = "btn--emoji__back--matched";
 
   return (
-    <button className={`btn btn--emoji ${btnStyle}`} onClick={handleClick}>
+    <button
+      className={`btn btn--emoji ${btnStyle}`}
+      onClick={selectedCardEntry ? null : handleClick}
+      disabled={matchedCardEntry}
+    >
       {btnContent}
     </button>
   );
